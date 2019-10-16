@@ -21,10 +21,15 @@ public class StealthPlayerCamera : MonoBehaviour
     [Tooltip("If this is set to [0,0,0], the relative position of the camera " +
              "to the player in the scene will be used.")]
     public Vector3      relativePosFar = Vector3.zero;
-
     [Tooltip("The rotation about the x axis of the camera in Far mode.")]
     public float        xRotationFar = 60;
 
+    [Header("Inscribed - Near Mode")]
+    public Vector3 relativePosNear = new Vector3(0, 2.5f, -2);
+    [Tooltip("Determines how far the camera will lead the player in Near mode.")]
+    public float relativePosNearLRShift = 1;
+    [Tooltip("The rotation about the x-axis of the camera in Near mode.")]
+    public float xRotationNear = 25;
 
     [Header("Dynamic")]
     public eCamMode camMode = eCamMode.far;
@@ -52,9 +57,12 @@ public class StealthPlayerCamera : MonoBehaviour
         else
         {
             // When inCover, the camMode switches to eCamMode.near_ if the player is near the edge of cover
-
-            // But for now, until that challenge, it's always eCamMode.far.
-            camMode = eCamMode.far;
+            if (coverInfo.zoomL && !coverInfo.zoomR)
+                camMode = eCamMode.nearR;
+            else if (!coverInfo.zoomL && coverInfo.zoomR)
+                camMode = eCamMode.nearL;
+            else
+                camMode = eCamMode.far;
         }
 
         // This is initially [0,0,0] to show the issue visually by jumping the Camera
@@ -69,7 +77,11 @@ public class StealthPlayerCamera : MonoBehaviour
                 break;
             case eCamMode.nearL:
             case eCamMode.nearR:
-                // This will be added by learners later.
+                // Desired position should be relative to playerInstance facing and position.
+                Vector3 pRelative = relativePosNear;
+                pRelative.x += (camMode == eCamMode.nearL) ? -relativePosNearLRShift : relativePosNearLRShift;
+                pDesired = playerInstance.transform.TransformPoint(pRelative);
+                rotDesired = Quaternion.Euler(xRotationNear, coverInfo.inCover * 90, 0);
                 break;
         }
 

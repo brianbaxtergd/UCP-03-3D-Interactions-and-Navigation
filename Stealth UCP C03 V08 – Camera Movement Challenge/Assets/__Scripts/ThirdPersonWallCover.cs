@@ -39,6 +39,9 @@ public class ThirdPersonWallCover : MonoBehaviour {
     public bool[]           againstCover = new bool[4];
     public int              inCover = -1;
     public float            creep;
+    public bool creepCamReversedButPlayerIsStillHoldingSameDir = false;
+    public float creepCamReversedHDir = 0f;
+    StealthPlayerCamera.eCamMode creepLastCamMode = StealthPlayerCamera.eCamMode.far;
 
     ThirdPersonUserControl  tPUControl;
     ThirdPersonCharacter    tPCharacter;
@@ -253,14 +256,39 @@ public class ThirdPersonWallCover : MonoBehaviour {
                 //  Solid handled the issue.
 
                 // Replace this line
-                return -h;
+                if (newCamMode != creepLastCamMode && Mathf.Abs(h) > 0.1f)
+                {
+                    // The camera has just reversed this frame!
+                    creepCamReversedButPlayerIsStillHoldingSameDir = true;
+                    creepCamReversedHDir = (h > 0) ? 1 : -1;
+                }
+                if (creepCamReversedButPlayerIsStillHoldingSameDir)
+                {
+#if WhenCamReversedSwitchingDirectionReleasesInputDirectionLock
+                    if (h * creepCamReversedHDir < 0 || Mathf.Abs(h) > 0.1f)
+#else
+                    if (Mathf.Abs(h) < 0.1f)
+#endif
+                    {
+                        // This happens when h has switched directions or is too small.
+                        creepCamReversedButPlayerIsStillHoldingSameDir = false;
+                    }
+                }
+
+                if (creepCamReversedButPlayerIsStillHoldingSameDir)
+                {
+                    return (creepLastCamMode == StealthPlayerCamera.eCamMode.far) ? -h : h;
+                }
+                creepLastCamMode = newCamMode;
+                return (newCamMode == StealthPlayerCamera.eCamMode.far) ? -h : h;
+
 
             case 3:
                 return v;
         }
 #endif
 
-        return 0;
+                        return 0;
     }
 
 
